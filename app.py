@@ -17,7 +17,7 @@ headers = {
 @app.route('/api/home')
 def get_home_data():
     """获取首页相关数据"""
-    
+
     music_data = requests.get('https://music.douban.com/', headers=headers).content
     soup = BeautifulSoup(music_data, 'lxml')
 
@@ -75,6 +75,25 @@ def get_home_data():
         data['doubanMusic250'].append(obj)
 
     # !返回数据
+    return jsonify(data)
+
+@app.route('/api/home/reactData')
+def get_home_react_data():
+    """本周单曲榜
+        - 这里的数据是后面渲染出来的。爬虫的时候获取不到
+        * 查看了网络请求，发现有三个部分的数据是通过 react js渲染出来的。数据似乎是后台直接就组装好了的
+        * 这里直接就是获取对应的js，然后提取出相关的数据出来
+    """
+    music_data = requests.get('https://img3.doubanio.com/misc/mixed_static/e2291d495c46b31.js')
+    music_data.encoding = 'utf-8'
+    music_text = music_data.text
+    # print(music_text)
+    reg = re.compile(r'React\.render\(React.createElement\(component,(.*)\), \$el\[0\]\);')
+    reg_data = reg.findall(music_text)
+    # print(reg_data)
+    data = {
+        'reactRenderData': [json.loads(item) for item in reg_data]
+    }
     return jsonify(data)
 
 @app.route('/topBanner')
@@ -170,7 +189,7 @@ def douban_songs():
 @app.route('/reactRenderData')
 def hot_artist_songs():
     """本周单曲榜
-        ! 这里的数据是后面渲染出来的。爬虫的时候获取不到
+        - 这里的数据是后面渲染出来的。爬虫的时候获取不到
         * 查看了网络请求，发现有三个部分的数据是通过 react js渲染出来的。数据似乎是后台直接就组装好了的
         * 这里直接就是获取对应的js，然后提取出相关的数据出来
     """
