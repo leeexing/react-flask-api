@@ -3,6 +3,7 @@
 from flask import Blueprint, jsonify
 import requests, re, json
 from bs4 import BeautifulSoup
+from ..util import ResponseHelper
 from ..conf import headers
 
 api_home = Blueprint('home', __name__)
@@ -20,6 +21,7 @@ def get_home_page():
     data = {
         'bannerImgs': [],
         'popularArtists': [],
+        'newArtists': [],
         'editorFeatureSongs': [],
         'joinInfo': [],
         'doubanMusic250': [],
@@ -33,15 +35,28 @@ def get_home_page():
         obj = {
             'name': artist.select('.title')[0].get_text(),
             'type': artist.select('.genre')[0].get_text(),
-            'artistPhotoImg': 'https://images.weserv.nl/?url=' + re.match(".*\('(http.*)'\)", artist.select('.artist-photo-img')[0].get('style')).groups()[0][8:],
+            'artistPhotoImg': 'https://images.weserv.nl/?url=' + re.match(".*\('(http.*)'\)",
+                artist.select('.artist-photo-img')[0].get('style')).groups()[0][8:],
             'hoverTexts': [item.get_text() for item in artist.select('.hoverlay p')]
         }
         data['popularArtists'].append(obj)
+    # !上升最快音乐人
+    new_artists = soup.select('.new-artists .artist-item')
+    for new_artist in new_artists:
+        obj = {
+            'name': new_artist.select('.title')[0].get_text(),
+            'type': new_artist.select('.genre')[0].get_text(),
+            'artistPhotoImg': 'https://images.weserv.nl/?url=' + re.match(".*\('(http.*)'\)",
+                new_artist.select('.artist-photo-img')[0].get('style')).groups()[0][8:],
+            'hoverTexts': [item.get_text() for item in new_artist.select('.hoverlay p')]
+        }
+        data['newArtists'].append(obj)
     # !编辑推荐
     feature_items = soup.select('.feature-item')
     for item in feature_items:
         obj = {
-            'cover': 'https://images.weserv.nl/?url=' + re.match(".*\((http.*)\)", item.select('.cover')[0].get('style')).groups()[0][8:],
+            'cover': 'https://images.weserv.nl/?url=' + re.match(".*\((http.*)\)",
+                item.select('.cover')[0].get('style')).groups()[0][8:],
             'type': item.select('> p')[0].get_text(),
             'name': item.select('.primary-link')[0].get_text(),
             'focus': item.select('h4')[0].get_text(),
@@ -68,7 +83,7 @@ def get_home_page():
         data['doubanMusic250'].append(obj)
 
     # !返回数据
-    return jsonify(data)
+    return ResponseHelper.return_true_data(data=data)
 
 @api_home.route('/home/hotsongs')
 def get_home_hotsongs():
@@ -82,7 +97,10 @@ def get_home_hotsongs():
     js_text = music_data.text
     reg = re.compile(r'React\.render\(React.createElement\(component,(.*)\), \$el\[0\]\);')
     reg_data = reg.findall(js_text)
+    react_data = [json.loads(item) for item in reg_data]
     data = {
-        'reactRenderData': [json.loads(item) for item in reg_data]
+        'newAlbumList': react_data[0],
+        'hotProgramme': react_data[1],
+        'weekTop10': react_data[2],
     }
-    return jsonify(data)
+    return ResponseHelper.return_true_data(data=data)
