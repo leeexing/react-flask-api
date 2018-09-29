@@ -5,7 +5,7 @@ from flask import jsonify
 class ResponseHelper:
     """输出帮助类"""
     @staticmethod
-    def return_true_data(data, msg='success', status=True, **kwargs):
+    def return_true_data(data=None, msg='success', status=True, **kwargs):
         """返回正确结果"""
         return jsonify({
             "result": status,

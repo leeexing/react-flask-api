@@ -1,0 +1,9 @@
+.vscode/
+__pycache__
+log.log
+.qiniu_*
+venv/
+views/
+client/
+test/
+log/
