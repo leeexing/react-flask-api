@@ -30,5 +30,20 @@ def get_tag_data():
             }
             obj['content'].append(tag_obj)
         data.append(obj)
-    print(data)
+    # print(data)
+    return ResponseHelper.return_true_data(data=data)
+
+@api_tag.route('/tags/cloud')
+def get_tag_cloud_data():
+    """所有热门标签"""
+    music_tag_content = requests.get('https://music.douban.com/tag/?view=cloud', headers=headers).content
+    music_tag_soup = BeautifulSoup(music_tag_content, 'lxml')
+    data = []
+    music_tag_mods = music_tag_soup.select('.tagCol td')
+    for tag in music_tag_mods:
+        tag_obj = {
+            'name': tag.select('a')[0].get_text(),
+            'number': int(reg_num.findall(tag.select('b')[0].get_text())[0])
+        }
+        data.append(tag_obj)
     return ResponseHelper.return_true_data(data=data)
