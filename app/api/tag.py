@@ -63,7 +63,7 @@ def get_tag_detail_data(tag_name=None):
             'title': tag.select('.pl2 a')[0].get_text(),
             'author': tag.select('.pl2 p')[0].get_text(),
             'score': tag.select('.pl2 .rating_nums')[0].get_text(),
-            'peopel': int(reg_num.findall(tag.select('.pl2 .pl')[1].get_text())[0])
+            'people': int(reg_num.findall(tag.select('.pl2 .pl')[1].get_text())[0])
         }
         data.append(tag_obj)
     return ResponseHelper.return_true_data(data=data)
