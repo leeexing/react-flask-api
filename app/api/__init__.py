@@ -4,3 +4,4 @@ from .home import api_home
 from .artists import api_artists
 from .topic import api_topic
 from .tag import api_tag
+from .subject import api_subject
