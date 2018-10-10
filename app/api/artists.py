@@ -2,7 +2,7 @@
 """歌手api"""
 import requests
 import re
-from flask import Blueprint, request
+from flask import Blueprint
 from bs4 import BeautifulSoup
 from ..util import ResponseHelper, stripBlank
 from ..conf import headers
@@ -60,7 +60,7 @@ def get_artists_data():
     for item in music_crawler_soup.select('#artists-tags .cloud1'):
         data['hotStyle'].append(item.select('a')[0].get_text())
     # !最受欢迎音乐人
-    popularArtists = music_crawler_soup.find('div', attrs={'data-dstat-areaid':'129'})
+    popularArtists = music_crawler_soup.find('div', attrs={'data-dstat-areaid':'129'}) # -比较新颖的查找方式
     for item in popularArtists.select('li'):
         obj = {
             'href': item.select('a')[0].get('href'),
