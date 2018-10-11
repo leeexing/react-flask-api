@@ -38,3 +38,30 @@ def get_review_data(review_type='latest'):
         }
         data.append(obj)
     return ResponseHelper.return_true_data(data=data)
+
+@api_review.route('/review/detail/<review_id>')
+def get_review_detail_data(review_id=None):
+    """获取乐评的详情"""
+    url = 'https://music.douban.com/review/{}'.format(review_id)
+    music_crawler_content = requests.get(url, headers=headers).content
+    music_crawler_soup = BeautifulSoup(music_crawler_content, 'lxml')
+    data = {
+        'paragraphList': [],
+        'subjectInfo': []
+    }
+    data['title'] = music_crawler_soup.select('h1')[0].get_text()
+    data['avatar'] = music_crawler_soup.select('.avatar img')[0].get('src')
+    data['author'] = music_crawler_soup.select('.main-hd a')[0].select('span')[0].get_text()
+    data['albumName'] = music_crawler_soup.select('.main-hd a')[1].get_text()
+    data['stars'] = music_crawler_soup.select('.main-hd > span')[0].get('class')[0]
+    data['reviewTime'] = music_crawler_soup.select('.main-hd > span')[2].get_text()
+    data['subjectImgCover'] = music_crawler_soup.select('.subject-img img')[0].get('src')
+    for item in music_crawler_soup.select('.review-content p'):
+        data['paragraphList'].append(item.get_text().strip())
+    for item in music_crawler_soup.select('.info-list li'):
+        obj = {
+            'key': item.select('.info-item-key')[0].get_text(),
+            'val': item.select('.info-item-val')[0].get_text()
+        }
+        data['subjectInfo'].append(obj)
+    return ResponseHelper.return_true_data(data=data)
