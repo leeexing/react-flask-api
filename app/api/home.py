@@ -55,7 +55,7 @@ def get_home_page():
     feature_items = soup.select('.feature-item')
     for item in feature_items:
         obj = {
-            'cover': 'https://images.weserv.nl/?url=' + re.match(".*\((http.*)\)",
+            'cover': 'https://images.weserv.nl/?url=' + re.match(".*\((http.*)\)", \
                 item.select('.cover')[0].get('style')).groups()[0][8:],
             'type': item.select('> p')[0].get_text(),
             'name': item.select('.primary-link')[0].get_text(),
