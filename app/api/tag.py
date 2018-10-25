@@ -3,7 +3,7 @@ import requests
 import re
 from flask import Blueprint, request
 from bs4 import BeautifulSoup
-from ..util import ResponseHelper
+from ..util import ResponseHelper, extractDigitFromStr
 from ..conf import headers
 
 api_tag = Blueprint('tag', __name__)
@@ -26,11 +26,10 @@ def get_tag_data():
         for tag in tags:
             tag_obj = {
                 'name': tag.select('a')[0].get_text(),
-                'number': int(reg_num.findall(tag.select('b')[0].get_text())[0])
+                'number': extractDigitFromStr(tag.select('b')[0].get_text())
             }
             obj['content'].append(tag_obj)
         data.append(obj)
-    # print(data)
     return ResponseHelper.return_true_data(data=data)
 
 @api_tag.route('/tags/cloud')
@@ -43,7 +42,7 @@ def get_tag_cloud_data():
     for tag in music_tag_mods:
         tag_obj = {
             'name': tag.select('a')[0].get_text(),
-            'number': int(reg_num.findall(tag.select('b')[0].get_text())[0])
+            'number': extractDigitFromStr(tag.select('b')[0].get_text())
         }
         data.append(tag_obj)
     return ResponseHelper.return_true_data(data=data)
@@ -73,17 +72,22 @@ def get_tag_detail_data(tag_name=None):
     url = 'https://music.douban.com/tag/{}?start={}&type={}'.format(tag_name, start, queryType)
     music_tag_content = requests.get(url, headers=headers).content
     music_tag_soup = BeautifulSoup(music_tag_content, 'lxml')
-    data = []
+    data = {
+        'detailItems': []
+    }
     music_tag_detail = music_tag_soup.select('.article table')
     for tag in music_tag_detail:
         tag_obj = {
             'href': tag.select('.nbg')[0].get('href'),
-            'name': tag.select('.nbg img')[0].get('src'),
+            'subjectId': extractDigitFromStr(tag.select('.nbg')[0].get('href')),
+            'avatar': tag.select('.nbg img')[0].get('src'),
             'title': tag.select('.pl2 a')[0].get_text().strip().split('\n')[0],
             'subTitle': tag.select('.pl2 a span')[0].get_text() if tag.select('.pl2 a span') else None,
             'author': tag.select('.pl2 p')[0].get_text(),
+            'stars': extractDigitFromStr(tag.select('.star span')[0].get('class')[0]) / 10,
             'score': tag.select('.pl2 .rating_nums')[0].get_text(),
-            'peopleNum': int(reg_num.findall(tag.select('.pl2 .pl')[1].get_text())[0])
+            'peopleNum': extractDigitFromStr(tag.select('.pl2 .pl')[1].get_text()),
         }
-        data.append(tag_obj)
+        data['detailItems'].append(tag_obj)
+    data['total'] = music_tag_soup.select('.paginator > a')[-1].get_text()
     return ResponseHelper.return_true_data(data=data)
