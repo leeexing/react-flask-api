@@ -89,5 +89,5 @@ def get_tag_detail_data(tag_name=None):
             'peopleNum': extractDigitFromStr(tag.select('.pl2 .pl')[1].get_text()),
         }
         data['detailItems'].append(tag_obj)
-    data['total'] = music_tag_soup.select('.paginator > a')[-1].get_text()
+    data['total'] = int(music_tag_soup.select('.paginator > a')[-1].get_text()) * 10
     return ResponseHelper.return_true_data(data=data)

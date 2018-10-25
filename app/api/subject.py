@@ -3,7 +3,7 @@ import requests
 import re
 from flask import Blueprint
 from bs4 import BeautifulSoup
-from ..util import ResponseHelper
+from ..util import ResponseHelper, extractDigitFromStr
 from ..conf import headers
 
 api_subject = Blueprint('subject', __name__)
@@ -116,15 +116,13 @@ def get_subject_data(subject_id=None):
     data['article']['discussion'] = music_discussion
     # -aside
     aside = music_crawler_soup.select('.aside')[0]
+    data['aside']['commonUseTag'] = extractDigitFromStr(aside.select('#db-tags-section h2')[0].get_text())
     # !豆瓣成员标签
-    tags_section = {
-        'tags': []
-    }
+    tags_section = []
     tag_sections = aside.select('#db-tags-section')[0]
-    tags_section['title'] = tag_sections.select('h2')[0].get_text()
     for item in tag_sections.select('a'):
-        tags_section['tags'].append(item.get_text())
-    data['aside']['tags'] = music_discussion
+        tags_section.append(item.get_text())
+    data['aside']['tags'] = tags_section
     # !豆列推荐
     recomend = []
     for item in aside.select('#db-doulist-section li'):
