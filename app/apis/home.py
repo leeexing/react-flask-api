@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """首页api"""
-from flask import Blueprint, jsonify
+from flask import Blueprint
+from flask_restplus import Namespace, Resource
 import requests, re, json
 from bs4 import BeautifulSoup
 from ..util import ResponseHelper
@@ -8,6 +9,7 @@ from ..conf import headers
 
 api_home = Blueprint('home', __name__)
 reg = re.compile(r'React\.render\(React.createElement\(component,(.*)\), \$el\[0\]\);')
+ns = Namespace('home', description='首页')
 
 def get_home_hotsongs(src):
     """本周单曲榜
@@ -55,8 +57,6 @@ def get_home_page():
         reg_data = reg.findall(js_text)
         react_data = [json.loads(item) for item in reg_data][0]
         data['weekTop10'] = react_data
-        # print(react_data)
-    # print(data)
 
     # ^左侧数据获取
     # !banner轮播图
@@ -119,3 +119,11 @@ def get_home_page():
 
     # !返回数据
     return ResponseHelper.return_true_data(data=data)
+
+
+@ns.route('')
+class Home(Resource):
+
+    def get(self):
+        """豆瓣首页数据"""
+        return get_home_page()
