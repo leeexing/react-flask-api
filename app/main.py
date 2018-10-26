@@ -2,9 +2,9 @@
 """主文件"""
 from flask import Flask
 from flask_cors import CORS
-from app.api import (api_home, api_artists, api_topic, api_tag,
+from app.apis import (api_home, api_artists, api_topic, api_tag,
     api_subject, api_review, api_songlist)
-from app.api import api
+from app.apis import api
 
 def create_app():
     """创建基础app"""

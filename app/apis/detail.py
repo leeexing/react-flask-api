@@ -1,6 +1,6 @@
 from flask_restplus import Resource, Namespace
 
-ns = Namespace('detail', description='详情')
+ns = Namespace('detail', description='豆瓣音乐--详情')
 
 @ns.route('')
 class Detail(Resource):

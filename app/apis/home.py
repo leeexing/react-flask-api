@@ -7,6 +7,25 @@ from ..util import ResponseHelper
 from ..conf import headers
 
 api_home = Blueprint('home', __name__)
+reg = re.compile(r'React\.render\(React.createElement\(component,(.*)\), \$el\[0\]\);')
+
+def get_home_hotsongs(src):
+    """本周单曲榜
+        - 这里的数据是后面渲染出来的。爬虫的时候获取不到
+        * 查看了网络请求，发现有三个部分的数据是通过 react js渲染出来的。数据似乎是后台直接就组装好了的
+        * 这里直接就是获取对应的js，然后提取出相关的数据出来
+    """
+    music_data = requests.get(src)
+    music_data.encoding = 'utf-8'
+    js_text = music_data.text
+    reg_data = reg.findall(js_text)
+    react_data = [json.loads(item) for item in reg_data]
+    data = {
+        'newAlbumList': react_data[0],
+        'hotProgramme': react_data[1],
+        # 'weekTop10': react_data[2], #-豆瓣那边更改后，只返回两个。估计后面还有可能修改
+    }
+    return data
 
 @api_home.route('/home')
 def get_home_page():
@@ -15,9 +34,7 @@ def get_home_page():
     music_data = requests.get('https://music.douban.com/', headers=headers).content
     soup = BeautifulSoup(music_data, 'lxml')
 
-    # ^左侧数据获取
-    # !banner轮播图
-    banner_imgs = soup.select('.top-banner img')
+    # !总数据
     data = {
         'bannerImgs': [],
         'popularArtists': [],
@@ -25,7 +42,25 @@ def get_home_page():
         'editorFeatureSongs': [],
         'joinInfo': [],
         'doubanMusic250': [],
+        'weekTop10': []
     }
+
+    hot_song_src = [item.get('src') for item in soup.select('script') if item.get('src') and 'mixed_static' in item.get('src')][0]
+    hot_song_data = get_home_hotsongs(hot_song_src)
+    data = dict(data, **hot_song_data)
+    # !本周单曲榜
+    js_text_arr = [item.get_text() for item in soup.select('script') if item.get_text() and 'React.createElement' in item.get_text()]
+    if len(js_text_arr):
+        js_text = js_text_arr[0]
+        reg_data = reg.findall(js_text)
+        react_data = [json.loads(item) for item in reg_data][0]
+        data['weekTop10'] = react_data
+        # print(react_data)
+    # print(data)
+
+    # ^左侧数据获取
+    # !banner轮播图
+    banner_imgs = soup.select('.top-banner img')
     for img in banner_imgs:
         img_src = img.get('src')
         data['bannerImgs'].append(img_src)
@@ -83,24 +118,4 @@ def get_home_page():
         data['doubanMusic250'].append(obj)
 
     # !返回数据
-    return ResponseHelper.return_true_data(data=data)
-
-@api_home.route('/home/hotsongs')
-def get_home_hotsongs():
-    """本周单曲榜
-        - 这里的数据是后面渲染出来的。爬虫的时候获取不到
-        * 查看了网络请求，发现有三个部分的数据是通过 react js渲染出来的。数据似乎是后台直接就组装好了的
-        * 这里直接就是获取对应的js，然后提取出相关的数据出来
-    """
-    music_data = requests.get('https://img3.doubanio.com/misc/mixed_static/e2291d495c46b31.js')
-    music_data.encoding = 'utf-8'
-    js_text = music_data.text
-    reg = re.compile(r'React\.render\(React.createElement\(component,(.*)\), \$el\[0\]\);')
-    reg_data = reg.findall(js_text)
-    react_data = [json.loads(item) for item in reg_data]
-    data = {
-        'newAlbumList': react_data[0],
-        'hotProgramme': react_data[1],
-        'weekTop10': react_data[2],
-    }
     return ResponseHelper.return_true_data(data=data)

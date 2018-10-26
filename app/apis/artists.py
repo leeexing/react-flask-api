@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """歌手api"""
 import requests
-import re
 from flask import Blueprint
+from flask_restplus import Namespace, Resource
 from bs4 import BeautifulSoup
-from ..util import ResponseHelper, stripBlank
+from ..util import ResponseHelper, stripBlank, extractDigitFromStr
 from ..conf import headers
 
+ns = Namespace('artists', description='豆瓣音乐-音乐人')
 api_artists = Blueprint('artists', __name__)
-
-reg_num = re.compile(r'\d+')
 
 @api_artists.route('/artists')
 def get_artists_data():
@@ -42,7 +41,7 @@ def get_artists_data():
     # print(data)
     for item in music_crawler_soup.select('#artists-events li'):
         obj = {
-            'id': int(reg_num.findall(item.select('.pic a')[0].get('href'))[0]),
+            'id': extractDigitFromStr(item.select('.pic a')[0].get('href')),
             'cover': item.select('.pic img')[0].get('src'),
             'artistName': item.select('.artist-name')[0].get_text(),
             'title': item.select('.title a')[0].get_text(),
@@ -52,7 +51,7 @@ def get_artists_data():
     # !流派
     for item in music_crawler_soup.select('.genre-nav li'):
         obj = {
-            'pageId': int(reg_num.findall(item.select('a')[0].get('href'))[0]),
+            'pageId': extractDigitFromStr(item.select('a')[0].get('href')),
             'name': item.select('a')[0].get_text()
         }
         data['generList'].append(obj)
@@ -89,3 +88,11 @@ def get_artists_data():
         }
         data['hotBrand'].append(obj)
     return ResponseHelper.return_true_data(data=data)
+
+
+@ns.route('')
+class Artists(Resource):
+
+    def get(self):
+        """获取音乐人列表数据"""
+        return get_artists_data()

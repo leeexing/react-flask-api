@@ -9,8 +9,11 @@ from .subject import api_subject
 from .review import api_review
 from .songlist import api_songlist
 
+# !swagger
 from .detail import ns as detail_api
 from .topic import ns as topic_api
+from .artists import ns as artists_api
+from .tag import ns as tag_api
 
 api = Api(
     title='Douban Music API',
@@ -20,3 +23,5 @@ api = Api(
 )
 api.add_namespace(detail_api)
 api.add_namespace(topic_api)
+api.add_namespace(artists_api)
+api.add_namespace(tag_api)

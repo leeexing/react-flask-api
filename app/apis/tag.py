@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 import requests
-import re
 from flask import Blueprint, request
+from flask_restplus import Namespace, Resource
+from app.fields import tag_detail_field
 from bs4 import BeautifulSoup
 from ..util import ResponseHelper, extractDigitFromStr
 from ..conf import headers
 
 api_tag = Blueprint('tag', __name__)
-
-reg_num = re.compile(r'\d+')
+ns = Namespace('tags', description='豆瓣音乐--标签')
+tag_detail_model = ns.model('tagDetail', tag_detail_field)
 
 @api_tag.route('/tags')
-def get_tag_data():
+def get_tags_data():
     """分类浏览"""
     music_tag_content = requests.get('https://music.douban.com/tag/', headers=headers).content
     music_tag_soup = BeautifulSoup(music_tag_content, 'lxml')
@@ -33,7 +34,7 @@ def get_tag_data():
     return ResponseHelper.return_true_data(data=data)
 
 @api_tag.route('/tags/cloud')
-def get_tag_cloud_data():
+def get_tag_cloud():
     """所有热门标签"""
     music_tag_content = requests.get('https://music.douban.com/tag/?view=cloud', headers=headers).content
     music_tag_soup = BeautifulSoup(music_tag_content, 'lxml')
@@ -47,8 +48,8 @@ def get_tag_cloud_data():
         data.append(tag_obj)
     return ResponseHelper.return_true_data(data=data)
 
-@api_tag.route('/tag/<tag_name>/related')
-def get_tag_link_data(tag_name=None):
+@api_tag.route('/tags/<tag_name>/related')
+def get_tag_related(tag_name=None):
     """相关的标签"""
     url = 'https://music.douban.com/tag/{}'.format(tag_name)
     music_tag_content = requests.get(url, headers=headers).content
@@ -63,10 +64,12 @@ def get_tag_link_data(tag_name=None):
         data.append(tag_obj)
     return ResponseHelper.return_true_data(data=data)
 
-@api_tag.route('/tag/<tag_name>')
-def get_tag_detail_data(tag_name=None):
+@api_tag.route('/tags/<tag_name>')
+def get_tag_detail(tag_name=None):
     """豆瓣音乐标签:<tagName>"""
     query = request.args
+    if not query:
+        query = request.get_json()
     queryType = query.get('type', 'T')
     start = query.get('start', 0)
     url = 'https://music.douban.com/tag/{}?start={}&type={}'.format(tag_name, start, queryType)
@@ -91,3 +94,35 @@ def get_tag_detail_data(tag_name=None):
         data['detailItems'].append(tag_obj)
     data['total'] = int(music_tag_soup.select('.paginator > a')[-1].get_text()) * 10
     return ResponseHelper.return_true_data(data=data)
+
+
+@ns.route('')
+class Tags(Resource):
+
+    def get(self):
+        """分类浏览"""
+        return get_tags_data()
+
+
+@ns.route('/cloud')
+class TagsCloud(Resource):
+
+    def get(self):
+        """所有热门标签"""
+        return get_tag_cloud()
+
+
+@ns.route('/<tag_name>')
+class TagDetail(Resource):
+
+    @ns.expect(tag_detail_model)
+    def post(self, tag_name=None):
+        """具体标签详情"""
+        return get_tag_detail(tag_name)
+
+@ns.route('/<tag_name>/related')
+class TagRelated(Resource):
+
+    def get(self, tag_name=None):
+        """获取该标签相关联的标签"""
+        return get_tag_related(tag_name)

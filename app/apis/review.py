@@ -1,29 +1,28 @@
 # -*- coding: utf-8 -*-
 """歌手api"""
 import requests
-import re
 from flask import Blueprint
+from flask_restplus import Namespace, Resource
 from bs4 import BeautifulSoup
-from ..util import ResponseHelper
+from ..util import ResponseHelper, extractDigitFromStr
 from ..conf import headers
 
 api_review = Blueprint('reivew', __name__)
-
-reg_num = re.compile(r'\d+')
+ns = Namespace('review', decorators='乐评')
 
 @api_review.route('/review/<review_type>')
-def get_review_data(review_type='latest'):
+def get_review(review_type='latest'):
     """豆瓣最受欢迎的乐评"""
     url = 'https://music.douban.com/review/{}?app_name=music'.format(review_type)
     music_crawler_content = requests.get(url, headers=headers).content
     music_crawler_soup = BeautifulSoup(music_crawler_content, 'lxml')
     data = []
-    # music_crawler = music_crawler_soup.select('.article')[0]
+    # music_crawler = music_crawler_soup.select('.article')[0] # *另一种写法
     music_crawler = music_crawler_soup.find('div', class_='article')
     # !乐评类型
     for item in music_crawler.select('.review-list > div'):
         obj = {
-            'id': int(reg_num.findall(item.select('.subject-img')[0].get('href'))[0]),
+            'id': extractDigitFromStr(item.select('.subject-img')[0].get('href')),
             'albumCover': item.select('.subject-img img')[0].get('src'),
             'albumName': item.select('.subject-img img')[0].get('title'),
             'avatar': item.select('.avator img')[0].get('src'),
@@ -34,13 +33,13 @@ def get_review_data(review_type='latest'):
             'shortContent': item.select('.short-content a')[0].previous_sibling[:-1].strip(),
             'up': 0 if not item.select('.up span')[0].get_text().strip() else int(item.select('.up span')[0].get_text().strip()),
             'down': 0 if not item.select('.up span')[0].get_text().strip() else int(item.select('.up span')[0].get_text().strip()),
-            'reply': int(reg_num.findall(item.select('.reply')[0].get_text())[0]),
+            'reply': extractDigitFromStr(item.select('.reply')[0].get_text()),
         }
         data.append(obj)
     return ResponseHelper.return_true_data(data=data)
 
 @api_review.route('/review/detail/<review_id>')
-def get_review_detail_data(review_id=None):
+def get_review_detail(review_id=None):
     """获取乐评的详情"""
     url = 'https://music.douban.com/review/{}'.format(review_id)
     music_crawler_content = requests.get(url, headers=headers).content
@@ -65,3 +64,19 @@ def get_review_detail_data(review_id=None):
         }
         data['subjectInfo'].append(obj)
     return ResponseHelper.return_true_data(data=data)
+
+
+@ns.route('/<review_type>')
+class Review(Resource):
+
+    def get(self):
+        """获取某种类型的乐评列表"""
+        return get_review()
+
+
+@ns.route('/detail/<review_id>')
+class ReviewDetail(Resource):
+
+    def get(self):
+        """获取乐评详情"""
+        return get_review_detail()
