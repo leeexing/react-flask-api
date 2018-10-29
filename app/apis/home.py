@@ -22,11 +22,14 @@ def get_home_hotsongs(src):
     js_text = music_data.text
     reg_data = reg.findall(js_text)
     react_data = [json.loads(item) for item in reg_data]
+    print(len(react_data), '+++++')
     data = {
         'newAlbumList': react_data[0],
         'hotProgramme': react_data[1],
         # 'weekTop10': react_data[2], #-豆瓣那边更改后，只返回两个。估计后面还有可能修改
     }
+    if len(react_data) == 3:
+        data['weekTop10'] = react_data[2]
     return data
 
 @api_home.route('/home')
@@ -35,7 +38,6 @@ def get_home_page():
 
     music_data = requests.get('https://music.douban.com/', headers=headers).content
     soup = BeautifulSoup(music_data, 'lxml')
-
     # !总数据
     data = {
         'bannerImgs': [],
@@ -52,7 +54,7 @@ def get_home_page():
     data = dict(data, **hot_song_data)
     # !本周单曲榜
     js_text_arr = [item.get_text() for item in soup.select('script') if item.get_text() and 'React.createElement' in item.get_text()]
-    if len(js_text_arr):
+    if len(js_text_arr) and not hot_song_data.get('weekTop10', None):
         js_text = js_text_arr[0]
         reg_data = reg.findall(js_text)
         react_data = [json.loads(item) for item in reg_data][0]
