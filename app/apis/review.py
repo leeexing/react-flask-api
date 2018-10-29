@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from ..util import ResponseHelper, extractDigitFromStr
 from ..conf import headers
 
-api_review = Blueprint('reivew', __name__)
+api_review = Blueprint('review', __name__)
 ns = Namespace('review', decorators='乐评')
 
 @api_review.route('/review/<review_type>')

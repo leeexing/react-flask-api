@@ -3,7 +3,7 @@
 from flask import Flask
 from flask_cors import CORS
 from app.apis import (api_home, api_artists, api_topic, api_tag,
-    api_subject, api_review, api_songlist)
+    api_subject, api_review, api_songlist, api_chart)
 from app.apis import api
 
 def create_app():
@@ -24,3 +24,4 @@ def bind_api_route(app):
     app.register_blueprint(api_subject, url_prefix='/api')
     app.register_blueprint(api_review, url_prefix='/api')
     app.register_blueprint(api_songlist, url_prefix='/api')
+    app.register_blueprint(api_chart, url_prefix='/api')

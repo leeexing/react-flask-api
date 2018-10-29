@@ -8,6 +8,7 @@ from .tag import api_tag
 from .subject import api_subject
 from .review import api_review
 from .songlist import api_songlist
+from .chart import api_chart
 
 # !swagger
 from .detail import ns as detail_api
