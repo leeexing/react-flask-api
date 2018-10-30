@@ -16,6 +16,8 @@ from .topic import ns as topic_api
 from .artists import ns as artists_api
 from .tag import ns as tag_api
 from .home import ns as home_api
+from .chart import ns as chart_api
+from .subject import ns as subject_api
 
 api = Api(
     title='Douban Music API',
@@ -28,3 +30,5 @@ api.add_namespace(detail_api)
 api.add_namespace(topic_api)
 api.add_namespace(artists_api)
 api.add_namespace(tag_api)
+api.add_namespace(chart_api)
+api.add_namespace(subject_api)

@@ -2,13 +2,17 @@
 import requests
 import re
 from flask import Blueprint
+from flask_restplus import Namespace, Resource, fields
 from bs4 import BeautifulSoup
 from ..util import ResponseHelper, extractDigitFromStr
 from ..conf import headers
 
 api_subject = Blueprint('subject', __name__)
+ns = Namespace('subject', description='主题/专辑详情')
+subject_model = ns.model('subjectModel', {
+    'subjectID': fields.Integer(required=True, description='主题ID')
+})
 
-reg_num = re.compile(r'\d+')
 
 @api_subject.route('/subject/<subject_id>')
 def get_subject_data(subject_id=None):
@@ -30,7 +34,7 @@ def get_subject_data(subject_id=None):
     cover_detail['cover'] = article.select('#mainpic img')[0].get('src')
     cover_detail['info'] = re.split(r'\n+', article.select('#info')[0].get_text().replace(' ', ''))[1:-1]
     cover_detail['rate']['score'] = float(article.select('.rating_self strong')[0].get_text())
-    cover_detail['rate']['star'] = int(reg_num.findall(article.select('.rating_right .ll')[0].get('class')[1])[0])
+    cover_detail['rate']['star'] = extractDigitFromStr(article.select('.rating_right .ll')[0].get('class')[1])
     cover_detail['rate']['rateingPeople'] = int(article.select('.rating_people span')[0].get_text())
     cover_detail['rate']['stars5'] = article.select('.stars5 + .power + span')[0].get_text()
     cover_detail['rate']['stars4'] = article.select('.stars4 + .power + span')[0].get_text()
@@ -55,7 +59,7 @@ def get_subject_data(subject_id=None):
         'hot': [],
         'new': []
     }
-    short_comment['total'] = int(reg_num.findall(article.select('.mod-hd h2 a')[0].get_text())[0])
+    short_comment['total'] = extractDigitFromStr(article.select('.mod-hd h2 a')[0].get_text())
     short_comment['totalHref'] = article.select('.mod-hd h2 a')[0].get('href')
     hot_comments = article.select('#comment-list-wrapper .hot .comment-item')
     for hot in hot_comments:
@@ -139,6 +143,18 @@ def get_subject_data(subject_id=None):
         obj['cover'] = item.select('img')[0].get('src')
         obj['listener'] = item.select('+ div')[0].select('a')[0].get_text()
         obj['listenTime'] = item.select('+ div')[0].select('.pl')[0].get_text()
+        obj['stars'] = extractDigitFromStr(item.select('+ div')[0].select('.ll + span')[0].get('class')[0])
         collector.append(obj)
     data['aside']['collector'] = collector
     return ResponseHelper.return_true_data(data=data)
+
+
+@ns.route('/<subject_id>')
+class Subject(Resource):
+
+    @ns.doc(params={'subject_id': '主题获取ID'})
+    # @ns.expect(subject_model, validate=True)
+    def get(self, subject_id=None):
+        """获取具体的专辑详情"""
+        return get_subject_data(subject_id)
+
