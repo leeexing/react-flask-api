@@ -110,7 +110,7 @@ virtualenv==15.1.0
 virtualenvwrapper-win==1.2.5
 visitor==0.1.3
 w3lib==1.18.0
-Werkzeug==0.14.1
+Werkzeug==0.15.3
 wrapt==1.10.11
 wstools==0.4.8
 WTForms==2.1
