@@ -96,7 +96,7 @@ qiniu==7.2.0
 queuelib==1.4.2
 redis==2.10.6
 requests==2.18.4
-scrapy==1.5.1
+scrapy==2.6.1
 selenium==3.8.1
 service-identity==17.0.0
 six==1.11.0
